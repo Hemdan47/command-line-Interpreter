@@ -25,7 +25,7 @@ public class Terminal {
      * Prints the current working directory to the console.
      */
     public String pwd(){
-        System.out.println(getCurrentDir());
+        System.out.print(getCurrentDir());
         return getCurrentDir();
     }
 
@@ -41,7 +41,6 @@ public class Terminal {
         }
         else if(args.length > 1){
             output.append("cd: too many arguments.\n");
-            System.out.print(output.toString());
             return output.toString();
         }
         else{
@@ -52,12 +51,10 @@ public class Terminal {
             File file = new File(targetPath.toAbsolutePath().toString());
             if(!file.exists()){ // If directory does not exist
                 output.append("cd: no such file or directory: " + targetPath.getFileName() + "\n");
-                System.out.print(output.toString());
                 return output.toString();
             }
             if(!file.isDirectory()){ // If path is not a directory
                 output.append("cd: not a directory: " + targetPath.getFileName() + "\n");
-                System.out.print(output.toString());
                 return output.toString();
             }
             currentDir = targetPath.normalize(); // Set the new current directory
@@ -98,7 +95,6 @@ public class Terminal {
         else{ // Invalid argument case
             output.append("ls: invalid argument (currently only supports ls, ls -r, ls -a)\n");
         }
-        System.out.print(output);
         return output.toString();
     }
 
@@ -111,7 +107,6 @@ public class Terminal {
         StringBuilder output = new StringBuilder();
         if(args.length < 1){
             output.append("mkdir: too few arguments\n");
-            System.out.print(output.toString());
             return output.toString();
         }
         Arrays.stream(args).forEach((e) -> {
@@ -132,7 +127,6 @@ public class Terminal {
                 }
             }
         });
-        System.out.print(output.toString());
         return output.toString();
     }
 
@@ -145,7 +139,6 @@ public class Terminal {
         StringBuilder output = new StringBuilder();
         if(args.length < 1){
             output.append("rmdir: too few arguments\n");
-            System.out.print(output.toString());
             return output.toString();
         }
 
@@ -177,7 +170,6 @@ public class Terminal {
                 output.append("rmdir: '" + cur.getFileName() + "' does not exist.\n");
             }
         });
-        System.out.print(output.toString());
         return output.toString();
     }
 
@@ -186,10 +178,11 @@ public class Terminal {
      *
      * @param args the names or paths of files to create.
      */
-    public void touch(String[] args){
+    public String touch(String[] args){
+        StringBuilder output = new StringBuilder();
         if(args.length < 1){ // Error for missing file operand
-            System.out.println("touch: missing file operand");
-            return;
+            output.append("touch: missing file operand\n");
+            return output.toString();
         }
 
         Arrays.stream(args).forEach((e) -> {
@@ -203,10 +196,11 @@ public class Terminal {
                     Files.createFile(cur);
                 }
                 catch (IOException ex) {
-                    System.out.println("touch: An error occurred while creating file '" + cur.getFileName() + "'");
+                    output.append("touch: An error occurred while creating file '" + cur.getFileName() + "'\n");
                 }
             }
         });
+        return output.toString();
     }
 
     /**
@@ -251,7 +245,6 @@ public class Terminal {
         else{
             output.append("mv: too many arguments\n");
         }
-        System.out.print(output.toString());
         return output.toString();
     }
 
@@ -290,7 +283,6 @@ public class Terminal {
                 output.append("rm: An error occurred while trying to delete '" + cur.getFileName() + "'\n");
             }
         });
-        System.out.print(output.toString());
         return output.toString();
     }
 
@@ -328,8 +320,72 @@ public class Terminal {
                 output.append("cat: " + file.getName() + ": No such file or directory\n");
             }
         });
-        System.out.println(output.toString());
         return output.toString();
+    }
+
+
+    /**
+     * Writes the specified input string to a file.
+     *
+     * @param args an array of Strings where:
+     *             - args[0] is the content to write to the file.
+     *             - args[1] is the path of the file to which the content will be written.
+     * @return true if the file is written successfully, false otherwise.
+     */
+    public boolean writeToAFile(String[] args) {
+        // Retrieve the input string from the first argument.
+        String input = args[0];
+
+        // Create a Path object from the second argument for the destination file.
+        Path destPath = Path.of(args[1]);
+
+        // Check if the destination path is not absolute; if so, resolve it against the current directory.
+        if (!destPath.isAbsolute()) {
+            destPath = currentDir.resolve(destPath);
+        }
+
+        try {
+            // Write the input string to the specified file, creating it if it does not exist and truncating it if it does.
+            Files.write(destPath, input.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            System.out.println("File written successfully.");
+            return true; // Return true to indicate successful write operation.
+        } catch (IOException e) {
+            // Handle any IOException that may occur during the write operation.
+            System.out.println("Failed to write to file.");
+            return false; // Return false to indicate failure in the write operation.
+        }
+    }
+
+    /**
+     * Appends the specified input string to a file.
+     *
+     * @param args an array of Strings where:
+     *             - args[0] is the content to append to the file.
+     *             - args[1] is the path of the file to which the content will be appended.
+     * @return true if the content is appended successfully, false otherwise.
+     */
+    public boolean appendToAFile(String[] args) {
+        // Retrieve the input string from the first argument.
+        String input = args[0];
+
+        // Create a Path object from the second argument for the destination file.
+        Path destPath = Path.of(args[1]);
+
+        // Check if the destination path is not absolute; if so, resolve it against the current directory.
+        if (!destPath.isAbsolute()) {
+            destPath = currentDir.resolve(destPath);
+        }
+
+        try {
+            // Append the input string to the specified file, creating it if it does not exist.
+            Files.write(destPath, input.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            System.out.println("Content appended to file successfully.");
+            return true; // Return true to indicate successful append operation.
+        } catch (IOException e) {
+            // Handle any IOException that may occur during the append operation.
+            System.out.println("Failed to append to file.");
+            return false; // Return false to indicate failure in the append operation.
+        }
     }
 
 
@@ -337,22 +393,26 @@ public class Terminal {
     /**
      * Prints the list of supported commands and their descriptions.
      */
-    private void help() {
-        System.out.println("1.help     -> prints the list of supported commands");
-        System.out.println("2.pwd      -> prints the current working directory");
-        System.out.println("3.cd       -> changes the current working directory");
-        System.out.println("4.ls       -> lists the contents of the current directory");
-        System.out.println("5.ls -a    -> lists all contents even entries starting with .(hidden files)");
-        System.out.println("6.ls -r    -> lists the contents of the current directory in reverse order");
-        System.out.println("7.mkdir    -> creates a new directory");
-        System.out.println("8.rmdir    -> removes an empty directory");
-        System.out.println("9.touch    -> creates a new file");
-        System.out.println("10.mv      -> command is used to move or rename files and directories from one location to another in a file system.");
-        System.out.println("11.rm      -> removes a file");
-        System.out.println("12.cat     -> prints the contents of a file");
-        System.out.println("13.exit    -> exits the terminal");
-    }
+    private String help() {
+        StringBuilder output = new StringBuilder();
+        output.append("1.help     -> prints the list of supported commands");
+        output.append("2.pwd      -> prints the current working directory");
+        output.append("3.cd       -> changes the current working directory");
+        output.append("4.ls       -> lists the contents of the current directory");
+        output.append("5.ls -a    -> lists all contents even entries starting with .(hidden files)");
+        output.append("6.ls -r    -> lists the contents of the current directory in reverse order");
+        output.append("7.mkdir    -> creates a new directory");
+        output.append("8.rmdir    -> removes an empty directory");
+        output.append("9.touch    -> creates a new file");
+        output.append("10.mv      -> command is used to move or rename files and directories from one location to another in a file system.");
+        output.append("11.rm      -> removes a file");
+        output.append("12.cat     -> prints the contents of a file");
+        output.append("13.>       -> Redirects the output of the first command to be written to a file. If the file does not exist, it will be created. If the file exits, its original content will be replaced.");
+        output.append("14.>>      -> Redirects the output of the first command to be written to a file. If the file does not exist, it will be created. If the file exits, it appends to the file.");
+        output.append("15.exit    -> exits the terminal");
 
+       return output.toString();
+    }
     /**
      * Exits the terminal program.
      */
@@ -384,42 +444,68 @@ public class Terminal {
      * Simple function takes the command and choose the proper function
      */
     private void execute(String command , String[] args){
+        String output = "";
+        boolean writeToAFile = false;
+        boolean appendToAFile = false;
+        String targetFile = "";
+        boolean isPipe = false;
+        if(args.length >= 2 && (args[args.length-2].equals(">"))){
+            writeToAFile = true;
+            targetFile = args[args.length-1];
+            args = Arrays.copyOfRange(args, 0, args.length-2);
+        }
+        else if(args.length >= 2 && args[args.length-2].equals(">>")){
+            targetFile = args[args.length-1];
+            args = Arrays.copyOfRange(args, 0, args.length-2);
+            appendToAFile = true;
+        }
+
 
         if(command.equals("help")){
-            help();
+            output = help();
         }
         else if(command.equals("pwd")){
-            pwd();
+            output = pwd();
         }
         else if(command.equals("cd")){
-            cd(args);
+            output = cd(args);
         }
         else if(command.equals("ls")){
-            ls(args);
+            output =ls(args);
         }
         else if(command.equals("mkdir")){
-            mkdir(args);
+            output = mkdir(args);
         }
         else if(command.equals("rmdir")){
-            rmdir(args);
+            output = rmdir(args);
         }
         else if(command.equals("touch")){
-            touch(args);
+            output = touch(args);
         }
         else if(command.equals("mv")){
-            mv(args);
+            output = mv(args);
         }
         else if(command.equals("rm")){
-            rm(args);
+            output = rm(args);
         }
         else if(command.equals("cat")){
-            cat(args);
+            output = cat(args);
         }
         else if(command.equals("exit")){
             exit();
         }
         else{
-            System.out.println("'" + command + "' is not recognized as an internal or external command");
+            output = "'" + command + "' is not recognized as an internal or external command\n";
+        }
+
+        if(writeToAFile){
+            writeToAFile(new String[]{output , targetFile});
+        }
+        else if(appendToAFile){
+            appendToAFile(new String[]{output , targetFile});
+        }
+        else{
+            System.out.print(output);
         }
 
 
