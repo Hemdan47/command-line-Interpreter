@@ -91,7 +91,7 @@ class CatTest {
             String secondFileText = Files.readString(Path.of(t.getCurrentDir() + "\\catTest2.txt").toAbsolutePath());
 
             // Concatenates the expected output manually.
-            String expectedOutput = firstFileText + secondFileText;
+            String expectedOutput = firstFileText + "\n" + secondFileText + "\n";
 
             // Executes `cat` on the two test files and captures the output.
             String actualOutput = t.cat(new String[]{"catTest1.txt" , "catTest2.txt"});

@@ -311,6 +311,7 @@ public class Terminal {
                 else{
                     try {
                         output.append(Files.readString(cur)); // Append file contents to output
+                        output.append("\n");
                     } catch (IOException ex) {
                         output.append("cat: An error occurred, can't read the file: '" + file.getName() + "'\n");
                     }
